@@ -227,11 +227,42 @@ class SfHealth:
             sys.exit()
         pp = pprint.PrettyPrinter(indent=4)
         pp.pprint(self.health_check)
-        print("--------------------")
-        print(self.health_check)
+        #print("--------------------")
+        #print(self.health_status)
+
+
+    #This function returns summarized hc
+    def hc_summary(self):
+        try:
+            print(self.env)
+            print(self.health_status[self.env])
+            self.summary_hc["url"]=self.url
+            self.summary_hc["last_hc_time"]=self.health_status["last_hc_time"]
+            self.summary_hc["overall_system"]=self.health_status[self.env]["overall_system"]
+            self.summary_hc["services"]=True
+
+            for k,v in self.health_status[self.env]["services"].items():
+                if v == self.notok_health:
+                    self.summary_hc["services"]=False
+                    break
+       
+            if self.summary_hc["services"]:
+                self.summary_hc["services"]=self.ok_health
+            else:
+                self.summary_hc["services"]=self.notok_health
+            self.summary_hc["status"]=self.ok_health
+        except KeyError:
+            self.summary_hc["status"]="KeyError"
+                
+         
 
 
 if __name__ == "__main__":
     #(self, env,instance_name, domain="status.salesforce.com", driver_type="chrome", driver_path="/Users/g/drivers/chromedriver"):
-    sf=SfHealth("dev", "CS12")
+    sf=SfHealth("dev", "CS16")
     sf.perform_health_check()
+    print(sf.url)
+    print(sf.health_status)
+    print()
+    sf.hc_summary()
+    print(sf.summary_hc)
