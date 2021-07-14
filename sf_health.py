@@ -234,8 +234,6 @@ class SfHealth:
     #This function returns summarized hc
     def hc_summary(self):
         try:
-            print(self.env)
-            print(self.health_status[self.env])
             self.summary_hc["url"]=self.url
             self.summary_hc["last_hc_time"]=self.health_status["last_hc_time"]
             self.summary_hc["overall_system"]=self.health_status[self.env]["overall_system"]
@@ -259,9 +257,8 @@ class SfHealth:
 
 if __name__ == "__main__":
     #(self, env,instance_name, domain="status.salesforce.com", driver_type="chrome", driver_path="/Users/g/drivers/chromedriver"):
-    sf=SfHealth("dev", "CS16")
+    sf=SfHealth("dev", "CSXX")
     sf.perform_health_check()
-    print(sf.url)
     print(sf.health_status)
     print()
     sf.hc_summary()
