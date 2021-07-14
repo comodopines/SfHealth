@@ -1,3 +1,4 @@
+import requests
 import sys
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -11,10 +12,11 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
 import traceback
-
+from datetime import datetime
+from pytz import timezone
 
 class SfHealth:
-    def __init__(self, env,instance_name, domain="status.salesforce.com", driver_type="chrome", driver_path="/Users/gokadroid/drivers/chromedriver"):
+    def __init__(self, env,instance_name, domain="status.salesforce.com", tz='US/Central', driver_type="chrome", driver_path="/Users/gokadroid/python_scripts/ark/drivers/chromedriver"):
         self.env=env
         self.instance_name=instance_name
         self.domain=domain
@@ -43,7 +45,9 @@ class SfHealth:
         self.driver_options=None
         self.driver_option_args=['--no-sandbox', '--disable-dev-shm-usage', 'headless']
 
-        self.health_check={}
+        self.health_status={}
+        self.time_zone=tz
+        self.summary_hc = {}
 
         #Form the url to use
         self.form_url()
@@ -158,14 +162,10 @@ class SfHealth:
         for divsi, divs in enumerate(wrapped_div):
            int_div=divs.find_elements_by_css_selector('div')
            for idi, id in enumerate(int_div):
-               if vstr in id.text:
-                   instance_details[self.format_key(vstr)]=id.text.replace(vstr, '').replace('\n', '').strip()
-               elif rstr in id.text:
-                   instance_details[self.format_key(rstr)]=id.text.replace(rstr, '').replace('\n', '').strip()
-               elif mstr in id.text:
-                   instance_details[self.format_key(mstr)]=id.text.replace(mstr, '').replace('Help', '').replace('\n', ' ').strip()
-               else:
-                   continue
+               for im in self.instance_meta:
+                   if im in id.text:
+                       instance_details[self.format_key(im)]=id.text.replace(im, '').replace('Help', '').replace('\n', ' ').strip()
+                       break
 
         return instance_details
 
@@ -179,16 +179,7 @@ class SfHealth:
         #for env in env_check_list:
         try:
             env_health = {}
-            #instance = instances[env]
-            #print(instance)
-            #self.url=self.form_url(str(self.domain), str(self.instance_name), str(self.uri_prefix), str(self.uri_suffix))
-            #Store url in object
-            #self.form_url()
-
-            #print(env_url)
-            #env_health[self.format_key("URL")]=self.url
             oh_filter = str(self.overall_health_filter)
-            #print(oh_filter)
             
             #Initalize chrome driver
             self.initialize_chrome_driver()
@@ -201,12 +192,8 @@ class SfHealth:
 
             koverall,val = self.get_overall_health().split(delimiter)
 
-            #koverall,val = "A","B"
             env_health[self.format_key(koverall)] = val
 
-            #print(oh_filter)
-            #for sh_filter in instance["service_filter"]:
-            #print(sh_filter)
             sh_filter=self.service_filter
             service_health_dict={}
 
@@ -216,22 +203,23 @@ class SfHealth:
 
             env_health["services"] = service_health_dict
             env_health["instance_details"]=self.get_instance_details()
-            self.health_check[env] = env_health
+            self.health_status[env] = env_health
 
+            #Update extra info data for health check
+            self.health_status["last_hc_time"]=datetime.now(timezone(self.time_zone)).strftime("%m/%d/%Y %H:%M:%S %Z%z")
+            self.health_status["url"]=self.url
 
-            #get_instance_details(driver)
 
         except KeyError:
             print("Missing Key")
             print(traceback.format_exc())
             sys.exit()
-        pp = pprint.PrettyPrinter(indent=4)
-        pp.pprint(self.health_check)
+        #pp = pprint.PrettyPrinter(indent=4)
+        #pp.pprint(self.health_status)
         #print("--------------------")
         #print(self.health_status)
 
 
-    #This function returns summarized hc
     def hc_summary(self):
         try:
             self.summary_hc["url"]=self.url
