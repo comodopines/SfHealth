@@ -233,5 +233,5 @@ class SfHealth:
 
 if __name__ == "__main__":
     #(self, env,instance_name, domain="status.salesforce.com", driver_type="chrome", driver_path="/Users/g/drivers/chromedriver"):
-    sf=SfHealth("dev", "CS16")
+    sf=SfHealth("dev", "CS12")
     sf.perform_health_check()
